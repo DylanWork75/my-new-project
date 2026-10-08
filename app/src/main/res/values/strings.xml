@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Work App</string>
+    <string name="automation_accessibility_name">WorkApp screen automation</string>
+    <string name="automation_accessibility_description">Allows the WorkApp Koog agent to tap, swipe, and pinch the screen for app automation. Gestures are accepted only while WorkApp is the active app.</string>
+</resources>
