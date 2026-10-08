@@ -19,6 +19,40 @@ val googleApiKey: String = localProperties.getProperty("GOOGLE_API_KEY")
     ?: System.getenv("GOOGLE_API_KEY")
     ?: ""
 
+val geminiTestConfigSourceDir = layout.buildDirectory.dir("generated/source/geminiTestConfig")
+val geminiTestConfigSource = geminiTestConfigSourceDir.map {
+    it.file("com/example/workapp/GeminiTestConfig.kt")
+}
+abstract class GenerateGeminiTestConfigTask : DefaultTask() {
+    @get:Input
+    abstract val apiKey: Property<String>
+
+    @get:OutputFile
+    abstract val outputFile: RegularFileProperty
+
+    @TaskAction
+    fun generate() {
+        val escapedApiKey = apiKey.get()
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("$", "\\$")
+        outputFile.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText(
+                "package com.example.workapp\n\n" +
+                    "internal object GeminiTestConfig {\n" +
+                    "    const val API_KEY = \"$escapedApiKey\"\n" +
+                    "}\n"
+            )
+        }
+    }
+}
+
+val generateGeminiTestConfig = tasks.register<GenerateGeminiTestConfigTask>("generateGeminiTestConfig") {
+    apiKey.set(googleApiKey)
+    outputFile.set(geminiTestConfigSource)
+}
+
 android {
     namespace = "com.example.workapp"
     compileSdk {
@@ -27,18 +61,16 @@ android {
 
     defaultConfig {
         applicationId = "com.example.workapp"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        if (googleApiKey.isNotBlank()) {
-            testInstrumentationRunnerArguments["GOOGLE_API_KEY"] = googleApiKey
-        }
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
+    sourceSets.getByName("androidTest").java.srcDir(geminiTestConfigSourceDir.get().asFile)
 
     buildTypes {
         release {
@@ -55,6 +87,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+tasks.configureEach {
+    if (name.contains("AndroidTest") && (name.startsWith("compile") || name.contains("ksp"))) {
+        dependsOn(generateGeminiTestConfig)
     }
 }
 
@@ -103,6 +141,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.runner)
     androidTestImplementation(libs.koog.agents)

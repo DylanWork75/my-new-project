@@ -3,7 +3,6 @@ package com.example.workapp.ui.map
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import com.atiurin.ultron.core.compose.createUltronComposeRule
 import com.atiurin.ultron.core.uiautomator.uiobject2.UltronUiObject2.Companion.by
@@ -43,11 +42,9 @@ class CityMapInteractionTest {
     @Test
     fun koogAgentCanFindAndClickACityByNameWhenGoogleApiKeyIsConfigured() {
         hasTestTag("GoogleMapView").assertIsDisplayed()
-        val apiKey = InstrumentationRegistry.getArguments().getString("GOOGLE_API_KEY")
-        assumeTrue("Set GOOGLE_API_KEY in local.properties to run this Koog integration test.", !apiKey.isNullOrBlank())
 
         val result = runBlocking {
-            KoogScreenAutomationAgent(checkNotNull(apiKey)).findAndClickCity("Paris")
+            KoogScreenAutomationAgent().findAndClickCity("Paris")
         }
         assertFalse(result.isBlank())
         hasTestTag("SelectedCityDetailCard").assertIsDisplayed()
