@@ -14,7 +14,7 @@ if (localPropertiesFile.exists()) {
 }
 val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY")
     ?: System.getenv("MAPS_API_KEY")
-    ?: "AIzaSyAVO0p5TtDLdC0_KDfY4-7_vEpRpEzaBII"
+    ?: ""
 val googleApiKey: String = localProperties.getProperty("GOOGLE_API_KEY")
     ?: System.getenv("GOOGLE_API_KEY")
     ?: ""
