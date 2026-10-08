@@ -20,18 +20,6 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAVO0p5TtDLdC0_KDfY4-7_vEpRpEzaBII" />
-        <service
-            android:name=".automation.AppAutomationAccessibilityService"
-            android:exported="true"
-            android:label="@string/automation_accessibility_name"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/automation_accessibility_service" />
-        </service>
         <activity
             android:name=".MainActivity"
             android:exported="true"

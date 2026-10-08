@@ -20,9 +20,6 @@ import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.FormatListNumbered
 import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.SmartToy
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,7 +34,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -56,7 +52,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -64,8 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.example.workapp.BuildConfig
-import com.example.workapp.automation.AppAutomationAccessibilityService
-import com.example.workapp.automation.KoogAutomationViewModel
 import com.example.workapp.data.model.City
 import com.example.workapp.data.model.CityCategory
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -77,13 +70,9 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 
-val DEFAULT_NORTH_AMERICA_CENTER = LatLng(32.0, -100.0)
-const val DEFAULT_NORTH_AMERICA_ZOOM = 4.0f
-
 @Composable
 fun CityMapScreen(
     viewModel: MapViewModel,
-    automationViewModel: KoogAutomationViewModel,
     modifier: Modifier = Modifier,
     onCitySelected: ((City) -> Unit)? = null
 ) {
@@ -91,7 +80,6 @@ fun CityMapScreen(
 
     CityMapContent(
         uiState = uiState,
-        automationViewModel = automationViewModel,
         onSelectCity = { city ->
             viewModel.selectCity(city)
             if (city != null) {
@@ -101,7 +89,7 @@ fun CityMapScreen(
         onCountryFilterChange = { viewModel.setCountryFilter(it) },
         onCategoryFilterChange = { viewModel.setCategoryFilter(it) },
         onSearchQueryChange = { viewModel.updateSearchQuery(it) },
-        onResetCamera = { viewModel.resetCameraToNorthAmerica() },
+        onResetCamera = { viewModel.resetCameraToChicago() },
         onClearSelection = { viewModel.clearSelection() },
         modifier = modifier
     )
@@ -111,7 +99,6 @@ fun CityMapScreen(
 @Composable
 fun CityMapContent(
     uiState: MapUiState,
-    automationViewModel: KoogAutomationViewModel,
     onSelectCity: (City?) -> Unit,
     onCountryFilterChange: (String?) -> Unit,
     onCategoryFilterChange: (CityCategory?) -> Unit,
@@ -122,11 +109,12 @@ fun CityMapContent(
 ) {
     val windowAdaptiveInfo = currentWindowAdaptiveInfo()
     val isTwoPane = windowAdaptiveInfo.windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT
-    val automationState by automationViewModel.uiState.collectAsState()
-    var showAutomationDialog by remember { mutableStateOf(false) }
 
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(DEFAULT_NORTH_AMERICA_CENTER, DEFAULT_NORTH_AMERICA_ZOOM)
+        position = CameraPosition.fromLatLngZoom(
+            LatLng(DEFAULT_MAP_LATITUDE, DEFAULT_MAP_LONGITUDE),
+            DEFAULT_MAP_ZOOM
+        )
     }
 
     LaunchedEffect(uiState.cameraMoveEvent) {
@@ -149,17 +137,11 @@ fun CityMapContent(
             TopAppBar(
                 title = {
                     Text(
-                        text = "US & Mexico Cities Map",
+                        text = "Cities Around the World",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 },
                 actions = {
-                    IconButton(
-                        onClick = { showAutomationDialog = true },
-                        modifier = Modifier.testTag("OpenAutomationDialogButton")
-                    ) {
-                        Icon(Icons.Rounded.SmartToy, contentDescription = "Open screen automation")
-                    }
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -403,77 +385,7 @@ fun CityMapContent(
             }
         }
 
-        if (showAutomationDialog) {
-            KoogAutomationDialog(
-                isRunning = automationState.isRunning,
-                response = automationState.response,
-                error = automationState.error,
-                onRun = {
-                    automationViewModel.runInstruction(it)
-                    if (automationViewModel.canStartInstruction()) showAutomationDialog = false
-                },
-                onOpenAccessibilitySettings = {
-                    AppAutomationAccessibilityService.openAccessibilitySettings(it)
-                },
-                onDismiss = { showAutomationDialog = false }
-            )
-        }
     }
-}
-
-@Composable
-private fun KoogAutomationDialog(
-    isRunning: Boolean,
-    response: String?,
-    error: String?,
-    onRun: (String) -> Unit,
-    onOpenAccessibilitySettings: (android.content.Context) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    var prompt by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Screen automation") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Koog uses OpenAI GPT-4o to choose among tap, swipe, and pinch tools. Coordinates are absolute screen pixels. Automation only runs while WorkApp is in front.")
-                Text("Enable WorkApp screen automation in Android Accessibility settings before running a command.")
-                OutlinedTextField(
-                    value = prompt,
-                    onValueChange = { prompt = it },
-                    label = { Text("What should the app do?") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("AutomationPromptField"),
-                    enabled = !isRunning,
-                    minLines = 2,
-                    maxLines = 4
-                )
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                response?.let { Text(it) }
-                if (isRunning) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                        Text("Running automation…", modifier = Modifier.padding(start = 8.dp))
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = { onRun(prompt) }, enabled = !isRunning && prompt.isNotBlank()) {
-                Text("Run")
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(onClick = { onOpenAccessibilitySettings(context) }) {
-                    Text("Accessibility settings")
-                }
-                TextButton(onClick = onDismiss) { Text("Close") }
-            }
-        }
-    )
 }
 
 @Composable
@@ -563,7 +475,7 @@ fun SearchAndFilterBar(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
-                placeholder = { Text("Search US & MX cities or states...", fontSize = 14.sp) },
+                placeholder = { Text("Search cities, states, or countries...", fontSize = 14.sp) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Rounded.Search,
@@ -591,6 +503,7 @@ fun SearchAndFilterBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("SearchTextField")
+                    .semantics { contentDescription = "Search cities" }
             )
 
             Row(
@@ -635,6 +548,19 @@ fun SearchAndFilterBar(
                         selectedLabelColor = Color(0xFF2E7D32)
                     ),
                     modifier = Modifier.testTag("FilterChipMX")
+                )
+
+                FilterChip(
+                    selected = selectedCountry == "EUROPE",
+                    onClick = {
+                        onCountryFilterChange(if (selectedCountry == "EUROPE") null else "EUROPE")
+                    },
+                    label = { Text("🌍 Europe", fontSize = 12.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    ),
+                    modifier = Modifier.testTag("FilterChipEurope")
                 )
 
                 Spacer(modifier = Modifier.width(4.dp))

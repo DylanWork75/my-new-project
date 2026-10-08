@@ -45,6 +45,7 @@ mapsCompose = "6.4.1"
 playServicesMaps = "19.0.0"
 ultron = "2.6.3"
 koog = "1.3.0"
+koogGoogleClient = "1.3.0-beta"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -99,6 +100,7 @@ play-services-maps = { group = "com.google.android.gms", name = "play-services-m
 ultron-android = { group = "com.atiurin", name = "ultron-android", version.ref = "ultron" }
 ultron-compose = { group = "com.atiurin", name = "ultron-compose", version.ref = "ultron" }
 koog-agents = { group = "ai.koog", name = "koog-agents", version.ref = "koog" }
+koog-google-client = { group = "ai.koog", name = "prompt-executor-google-client", version.ref = "koogGoogleClient" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

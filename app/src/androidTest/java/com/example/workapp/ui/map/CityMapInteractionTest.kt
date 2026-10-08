@@ -3,6 +3,7 @@ package com.example.workapp.ui.map
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import com.atiurin.ultron.core.compose.createUltronComposeRule
 import com.atiurin.ultron.core.uiautomator.uiobject2.UltronUiObject2.Companion.by
@@ -10,8 +11,12 @@ import com.atiurin.ultron.extensions.assertIsDisplayed
 import com.atiurin.ultron.extensions.click
 import com.atiurin.ultron.extensions.inputText
 import com.example.workapp.MainActivity
+import com.example.workapp.automation.KoogScreenAutomationAgent
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assume.assumeTrue
+import org.junit.Assert.assertFalse
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -33,6 +38,20 @@ class CityMapInteractionTest {
 
         hasTestTag("GoogleMapView").assertIsDisplayed()
         hasTestTag("ResetCameraButton").assertIsDisplayed()
+    }
+
+    @Test
+    fun koogAgentCanFindAndClickACityByNameWhenGoogleApiKeyIsConfigured() {
+        hasTestTag("GoogleMapView").assertIsDisplayed()
+        val apiKey = InstrumentationRegistry.getArguments().getString("GOOGLE_API_KEY")
+        assumeTrue("Set GOOGLE_API_KEY in local.properties to run this Koog integration test.", !apiKey.isNullOrBlank())
+
+        val result = runBlocking {
+            KoogScreenAutomationAgent(checkNotNull(apiKey)).findAndClickCity("Paris")
+        }
+        assertFalse(result.isBlank())
+        hasTestTag("SelectedCityDetailCard").assertIsDisplayed()
+        hasText("Île-de-France, France").assertIsDisplayed()
     }
 
     @Test

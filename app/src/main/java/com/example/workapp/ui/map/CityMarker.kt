@@ -58,11 +58,11 @@ fun CityCategory.getIcon(): ImageVector {
 }
 
 fun getCountryFlagEmoji(countryCode: String): String {
-    return when (countryCode.uppercase()) {
-        "US" -> "🇺🇸"
-        "MX" -> "🇲🇽"
-        else -> "🌐"
-    }
+    val code = countryCode.uppercase()
+    if (code.length != 2 || code.any { it !in 'A'..'Z' }) return "🌐"
+    return code.map { letter ->
+        String(Character.toChars(0x1F1E6 + (letter.code - 'A'.code)))
+    }.joinToString(separator = "")
 }
 
 @Composable

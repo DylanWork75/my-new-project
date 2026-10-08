@@ -15,7 +15,7 @@ data class MapUiState(
     val filteredCities: List<City> = emptyList(),
     val selectedCity: City? = null,
     val selectedCategoryFilter: CityCategory? = null,
-    val selectedCountryFilter: String? = null, // "US", "MX", or null for all
+    val selectedCountryFilter: String? = null, // "US", "MX", "EUROPE", or null for all
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val cameraMoveEvent: LatLngTarget? = null

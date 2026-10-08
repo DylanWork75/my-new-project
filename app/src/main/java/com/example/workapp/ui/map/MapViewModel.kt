@@ -127,13 +127,13 @@ class MapViewModel(
         selectCity(null)
     }
 
-    fun resetCameraToNorthAmerica() {
+    fun resetCameraToChicago() {
         _uiState.update { state ->
             state.copy(
                 cameraMoveEvent = LatLngTarget(
-                    latitude = 32.0,
-                    longitude = -100.0,
-                    zoom = 4.0f
+                    latitude = DEFAULT_MAP_LATITUDE,
+                    longitude = DEFAULT_MAP_LONGITUDE,
+                    zoom = DEFAULT_MAP_ZOOM
                 )
             )
         }
@@ -147,12 +147,20 @@ class MapViewModel(
     ): List<City> {
         return cities.filter { city ->
             val matchesCategory = category == null || city.category == category
-            val matchesCountry = country == null || city.country.equals(country, ignoreCase = true)
+            val matchesCountry = country == null || when (country.uppercase()) {
+                EUROPE_FILTER -> city.country in EUROPEAN_COUNTRY_CODES
+                else -> city.country.equals(country, ignoreCase = true)
+            }
             val matchesQuery = query.isBlank() ||
                     city.name.contains(query, ignoreCase = true) ||
                     city.stateOrRegion.contains(query, ignoreCase = true) ||
                     city.countryName.contains(query, ignoreCase = true)
             matchesCategory && matchesCountry && matchesQuery
         }
+    }
+
+    private companion object {
+        const val EUROPE_FILTER = "EUROPE"
+        val EUROPEAN_COUNTRY_CODES = setOf("GB", "FR", "IT", "ES", "NL", "DE")
     }
 }

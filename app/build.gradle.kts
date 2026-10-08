@@ -15,8 +15,8 @@ if (localPropertiesFile.exists()) {
 val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY")
     ?: System.getenv("MAPS_API_KEY")
     ?: "AIzaSyAVO0p5TtDLdC0_KDfY4-7_vEpRpEzaBII"
-val openAiApiKey: String = localProperties.getProperty("OPENAI_API_KEY")
-    ?: System.getenv("OPENAI_API_KEY")
+val googleApiKey: String = localProperties.getProperty("GOOGLE_API_KEY")
+    ?: System.getenv("GOOGLE_API_KEY")
     ?: ""
 
 android {
@@ -33,9 +33,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        if (googleApiKey.isNotBlank()) {
+            testInstrumentationRunnerArguments["GOOGLE_API_KEY"] = googleApiKey
+        }
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
-        buildConfigField("String", "OPENAI_API_KEY", "\"${openAiApiKey.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
     }
 
     buildTypes {
@@ -89,7 +91,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.logging.interceptor)
-    implementation(libs.koog.agents)
     implementation(libs.moshi.kotlin)
     implementation(libs.okhttp)
     implementation(libs.play.services.location)
@@ -104,6 +105,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.koog.agents)
+    androidTestImplementation(libs.koog.google.client)
     androidTestImplementation(libs.ultron.android)
     androidTestImplementation(libs.ultron.compose)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
